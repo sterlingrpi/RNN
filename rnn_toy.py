@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 def get_model(num_input, num_output):
     num_units = 32
     # data must be 3D. Index 0 is sample number. 1 is time dimension. 2 & 3 are data
-    input = Input(shape=(1, num_input, num_input))
+    input = Input(shape=(None, num_input, num_input))
     x = TimeDistributed(Flatten())(input)
     x = Dense(num_units)(x)
     x = LSTM(units=num_units, return_sequences=True)(x)
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     model = get_model(num_input=1, num_output=1)
     model.summary()
 
-    sigs, next = gen_data(num_cycles=0.5, num_samples=10000)
+    sigs, next = gen_data(num_cycles=1, num_samples=10000)
 
     model.fit(x=sigs,
               y=next,
