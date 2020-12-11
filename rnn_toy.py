@@ -55,7 +55,15 @@ if __name__ == '__main__':
 
     model.fit(x=sigs,
               y=next,
-              epochs=10,
+              epochs=1,
+              shuffle=True,
+              )
+
+    sigs, next = gen_data(num_samples=10000, num_cycles=1, resolution=18, num_next=num_predict)
+
+    model.fit(x=sigs,
+              y=next,
+              epochs=1,
               shuffle=True,
               )
 
