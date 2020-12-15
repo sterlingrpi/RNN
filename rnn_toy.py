@@ -1,9 +1,9 @@
 # this is a minimal example demonstrating an RNN that accepts sequences of
 # variable lenght during training and during inference. Samples need to be
 # of the same length within a single batch. But each batch can have samples
-# with different lengths. Data must be 3D (sample_num, time, data1, data2)
+# with different lengths. Data must be 2D (sample_num, time, data)
 
-from tensorflow.keras.layers import LSTM, Dense, Flatten, TimeDistributed
+from tensorflow.keras.layers import LSTM, Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import Input, Model
 import numpy as np
@@ -12,13 +12,11 @@ import matplotlib.pyplot as plt
 
 def get_model(num_input, num_output):
     num_units = 32
-    # data must be 3D. Index 0 is sample number. 1 is time dimension. 2 & 3 are data
-    input = Input(shape=(None, num_input, 1))
-    x = TimeDistributed(Flatten())(input)
-    x = Dense(num_units)(x)
+    # data must be 2D. Index 0 is time dimension. 1 is data
+    input = Input(shape=(None, num_input))
+    x = LSTM(units=num_units, return_sequences=True)(input)
     x = LSTM(units=num_units, return_sequences=True)(x)
-    x = LSTM(units=num_units, return_sequences=True)(x)
-    x = LSTM(units=num_units)(x)
+    x = LSTM(units=num_units, return_sequences=False)(x)
     output = Dense(num_output)(x)
     model = Model(inputs=input, outputs=output)
     model.compile(loss='mse', optimizer=Adam(lr=0.01))
@@ -28,7 +26,7 @@ def get_model(num_input, num_output):
 def gen_data(num_samples, num_cycles, resolution, num_next):
     sig_len = int(num_cycles*resolution)
     #initialize data arrays
-    sigs = np.zeros((num_samples, sig_len, 1, 1))
+    sigs = np.zeros((num_samples, sig_len, 1))
     next = np.zeros((num_samples, num_next))
     for i in range(num_samples):
         start = np.random.random()*2*np.pi
@@ -42,7 +40,7 @@ def gen_data(num_samples, num_cycles, resolution, num_next):
             sig = -1*signal.sawtooth(time)
         else:
             sig = signal.square(time)
-        sigs[i, :, 0, 0] = sig[:-num_next]
+        sigs[i, :, 0] = sig[:-num_next]
         next[i] = sig[-num_next:]
     return sigs, next
 
@@ -59,18 +57,10 @@ if __name__ == '__main__':
               shuffle=True,
               )
 
-    sigs, next = gen_data(num_samples=10000, num_cycles=1, resolution=18, num_next=num_predict)
-
-    model.fit(x=sigs,
-              y=next,
-              epochs=1,
-              shuffle=True,
-              )
-
     sigs, _ = gen_data(num_samples=100, num_cycles=2, resolution=18, num_next=num_predict)
 
     for i in range(len(sigs)):
         prediction = model.predict(sigs[None, i])
-        plt.plot(sigs[i, :, 0, 0])
+        plt.plot(sigs[i, :, 0])
         plt.plot(np.arange(prediction.shape[1]) + sigs.shape[1], prediction[0])
         plt.show()
